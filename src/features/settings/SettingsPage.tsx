@@ -49,7 +49,15 @@ export default function SettingsPage({ t, language, onLanguageChange }: Props) {
       <section className="panel settings-panel settings-security-panel">
         <div className="settings-panel-heading"><span className="settings-panel-icon"><Settings2 size={19} /></span><div><h3>{t('settingsSecurity')}</h3><p>{t('settingsSecuritySubtitle')}</p></div></div>
         <div className="settings-security-row"><div><strong>{t('settingsSupabaseConfig')}</strong><span>{t(environmentConfigured ? 'settingsEnvConfigured' : 'settingsEnvMissing')}</span></div><span className="settings-connection-badge">{t(environmentConfigured ? 'configured' : 'notConnected')}</span></div>
-        <div className="settings-security-row"><div><strong>{t('settingsAuthentication')}</strong><span>{t(authenticated ? 'settingsAuthActive' : 'settingsNotConfigured')}</span></div><span className="settings-connection-badge">{t(authenticated ? 'connected' : 'notConnected')}</span></div>
+        <div className="settings-security-row"><div><strong>{t('settingsAuthentication')}</strong><span>
+  {t(
+    !environmentConfigured
+      ? 'settingsNotConfigured'
+      : authenticated
+        ? 'settingsAuthActive'
+        : 'settingsAuthSignedOut'
+  )}
+</span></div><span className="settings-connection-badge">{t(authenticated ? 'connected' : 'notConnected')}</span></div>
         {authenticated && <div className="settings-security-row"><div><strong>{auth.email}</strong><span>{t('settingsAuthActive')}</span></div><button type="button" className="client-cancel-button" onClick={() => { setSignOutError(''); void auth.signOut().catch((cause: unknown) => setSignOutError(cause instanceof Error ? cause.message : String(cause))) }}>{t('authSignOut')}</button></div>}
         {signOutError && <p className="client-form-error" role="alert">{signOutError}</p>}
         <div className="settings-security-row"><div><strong>{t('settingsSecureStorage')}</strong><span>{t('settingsNotConfigured')}</span></div><span className="settings-connection-badge">{t('notConnected')}</span></div>
