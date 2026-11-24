@@ -1,4 +1,6 @@
+import { useState } from 'react'
 import { Activity, Globe2, LockKeyhole, Plus, Settings2, ShieldAlert, Users } from 'lucide-react'
+import { useBackendAuth } from '../../backend/authContext'
 import { isSupabaseConfigured } from '../../backend/supabaseClient'
 
 type Props = {
@@ -8,11 +10,14 @@ type Props = {
 }
 
 export default function SettingsPage({ t, language, onLanguageChange }: Props) {
+  const auth = useBackendAuth()
   const environmentConfigured = isSupabaseConfigured()
+  const authenticated = auth.status === 'ready'
+  const [signOutError, setSignOutError] = useState('')
   return (
     <div className="settings-page">
       <div className="settings-heading"><div><p className="section-kicker">LUXRENT</p><h2>{t('settingsTitle')}</h2><p>{t('settingsSubtitle')}</p></div></div>
-      <div className="clients-demo-notice"><ShieldAlert size={18} /><div><strong>{t('demoTag')}</strong><span>{t('settingsDemoNotice')}</span></div></div>
+      <div className="clients-demo-notice"><ShieldAlert size={18} /><div><strong>{t('demoTag')}</strong><span>{t(authenticated ? 'settingsAuthenticatedNotice' : 'settingsDemoNotice')}</span></div></div>
 
       <section className="panel settings-panel">
         <div className="settings-panel-heading"><span className="settings-panel-icon"><Globe2 size={19} /></span><div><h3>{t('settingsPreferences')}</h3><p>{t('settingsPreferencesSubtitle')}</p></div></div>
@@ -44,7 +49,9 @@ export default function SettingsPage({ t, language, onLanguageChange }: Props) {
       <section className="panel settings-panel settings-security-panel">
         <div className="settings-panel-heading"><span className="settings-panel-icon"><Settings2 size={19} /></span><div><h3>{t('settingsSecurity')}</h3><p>{t('settingsSecuritySubtitle')}</p></div></div>
         <div className="settings-security-row"><div><strong>{t('settingsSupabaseConfig')}</strong><span>{t(environmentConfigured ? 'settingsEnvConfigured' : 'settingsEnvMissing')}</span></div><span className="settings-connection-badge">{t(environmentConfigured ? 'configured' : 'notConnected')}</span></div>
-        <div className="settings-security-row"><div><strong>{t('settingsAuthentication')}</strong><span>{t('settingsNotConfigured')}</span></div><span className="settings-connection-badge">{t('notConnected')}</span></div>
+        <div className="settings-security-row"><div><strong>{t('settingsAuthentication')}</strong><span>{t(authenticated ? 'settingsAuthActive' : 'settingsNotConfigured')}</span></div><span className="settings-connection-badge">{t(authenticated ? 'connected' : 'notConnected')}</span></div>
+        {authenticated && <div className="settings-security-row"><div><strong>{auth.email}</strong><span>{t('settingsAuthActive')}</span></div><button type="button" className="client-cancel-button" onClick={() => { setSignOutError(''); void auth.signOut().catch((cause: unknown) => setSignOutError(cause instanceof Error ? cause.message : String(cause))) }}>{t('authSignOut')}</button></div>}
+        {signOutError && <p className="client-form-error" role="alert">{signOutError}</p>}
         <div className="settings-security-row"><div><strong>{t('settingsSecureStorage')}</strong><span>{t('settingsNotConfigured')}</span></div><span className="settings-connection-badge">{t('notConnected')}</span></div>
       </section>
 

@@ -35,7 +35,7 @@ export function AuthGate({ children }: PropsWithChildren) {
 function AuthenticationForm() {
   const auth = useBackendAuth()
   const { t } = useTranslation()
-  const [mode, setMode] = useState<'signIn' | 'signUp' | 'reset'>('signIn')
+  const [mode, setMode] = useState<'signIn' | 'signUp'>('signIn')
   const [notice, setNotice] = useState('')
   const [formError, setFormError] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -47,12 +47,12 @@ function AuthenticationForm() {
     setSubmitting(true)
     const formData = new FormData(event.currentTarget)
     const name = String(formData.get('name') ?? '').trim()
-    const email = String(formData.get('email') ?? '').trim()
+    const email = String(formData.get('email') ?? '')
     const password = String(formData.get('password') ?? '')
     try {
       if (mode === 'signIn') {
         await auth.signIn(email, password)
-      } else if (mode === 'signUp') {
+      } else {
         const hasSession = await auth.signUp(name, email, password)
         if (hasSession) {
           setNotice(t('authAccountCreated'))
@@ -60,9 +60,6 @@ function AuthenticationForm() {
           setMode('signIn')
           setNotice(t('authCheckEmail'))
         }
-      } else {
-        await auth.requestPasswordReset(email)
-        setNotice(t('authResetSent'))
       }
     } catch (cause) {
       setFormError(getErrorMessage(cause))
@@ -76,26 +73,25 @@ function AuthenticationForm() {
       <section className="auth-card">
         <BrandMark />
         <p className="section-kicker">{t('authEyebrow')}</p>
-        <h1>{t(mode === 'signIn' ? 'authSignInTitle' : mode === 'signUp' ? 'authSignUpTitle' : 'authResetTitle')}</h1>
+        <h1>{t(mode === 'signIn' ? 'authSignInTitle' : 'authSignUpTitle')}</h1>
         <p className="auth-description">{t('authDescription')}</p>
 
         <form className="auth-form" onSubmit={(event) => void submit(event)}>
           {mode === 'signUp' && <label>{t('fullName')}<input name="name" autoComplete="name" required maxLength={120} /></label>}
           <label>{t('emailAddress')}<input name="email" type="email" autoComplete="email" required /></label>
-          {mode !== 'reset' && <label>{t('authPassword')}<input name="password" type="password" autoComplete={mode === 'signIn' ? 'current-password' : 'new-password'} required minLength={8} /></label>}
+          <label>{t('authPassword')}<input name="password" type="password" autoComplete={mode === 'signIn' ? 'current-password' : 'new-password'} required minLength={8} /></label>
           {formError && <p className="auth-error" role="alert">{formError}</p>}
           {notice && <p className="auth-notice" role="status">{notice}</p>}
           <button type="submit" className="auth-primary-button" disabled={submitting}>
-            {submitting ? t('authWorking') : t(mode === 'signIn' ? 'authSignIn' : mode === 'signUp' ? 'authCreateAccount' : 'authSendReset')}
+            {submitting ? t('authWorking') : t(mode === 'signIn' ? 'authSignIn' : 'authCreateAccount')}
           </button>
         </form>
 
         <div className="auth-links">
-          {mode === 'signIn' && <>
-            <button type="button" onClick={() => { setFormError(''); setNotice(''); setMode('reset') }}>{t('authForgotPassword')}</button>
-            <button type="button" onClick={() => { setFormError(''); setNotice(''); setMode('signUp') }}>{t('authNeedAccount')}</button>
-          </>}
-          {mode !== 'signIn' && <button type="button" onClick={() => { setFormError(''); setNotice(''); setMode('signIn') }}>{t('authBackToSignIn')}</button>}
+          <button type="button" onClick={() => { setFormError(''); setNotice(''); setMode((current) => current === 'signIn' ? 'signUp' : 'signIn') }}>
+            {t(mode === 'signIn' ? 'authNeedAccount' : 'authBackToSignIn')}
+          </button>
+          <p>{t('authRecoveryDeferred')}</p>
         </div>
       </section>
     </main>

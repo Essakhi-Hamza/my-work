@@ -10,6 +10,7 @@ export function BackendAuthProvider({ children }: PropsWithChildren) {
   const [error, setError] = useState('')
   const [agencyId, setAgencyId] = useState<string | null>(null)
   const [retryCount, setRetryCount] = useState(0)
+  const [membershipRefresh, setMembershipRefresh] = useState(0)
 
   useEffect(() => {
     if (!configured) return
@@ -26,6 +27,7 @@ export function BackendAuthProvider({ children }: PropsWithChildren) {
           setAgencyId(null)
           setError('')
           setStatus(nextSession ? 'checkingAgency' : 'signedOut')
+          if (nextSession) setMembershipRefresh((current) => current + 1)
         })
         unsubscribe = () => subscription.unsubscribe()
 
@@ -38,6 +40,7 @@ export function BackendAuthProvider({ children }: PropsWithChildren) {
         }
         setSession(data.session)
         setStatus(data.session ? 'checkingAgency' : 'signedOut')
+        if (data.session) setMembershipRefresh((current) => current + 1)
       } catch (cause) {
         if (!active) return
         setError(getErrorMessage(cause))
@@ -84,7 +87,7 @@ export function BackendAuthProvider({ children }: PropsWithChildren) {
     return () => {
       active = false
     }
-  }, [configured, userId])
+  }, [configured, userId, membershipRefresh])
 
   const value = useMemo<AuthContextValue>(() => ({
     status,
@@ -128,11 +131,13 @@ export function BackendAuthProvider({ children }: PropsWithChildren) {
       setStatus('ready')
     },
     signOut: async () => {
+      setError('')
       const client = await getSupabaseClient()
       const { error: signOutError } = await client.auth.signOut()
       if (signOutError) {
         setError(signOutError.message)
         setStatus('error')
+        throw signOutError
       }
     },
     retry: () => {
