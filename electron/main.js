@@ -25,10 +25,11 @@ function createWindow() {
     return { action: 'deny' }
   })
 
-  void window.loadURL(
-    process.env.VITE_DEV_SERVER_URL ??
-      (app.isPackaged ? `file://${path.join(__dirname, '../dist/index.html')}` : 'http://localhost:5173'),
-  )
+   if (app.isPackaged) {
+    void window.loadFile(path.join(__dirname, '../dist/index.html'))
+  } else {
+    void window.loadURL('http://localhost:5173')
+  }
 }
 
 app.whenReady().then(() => {
